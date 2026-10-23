@@ -1,0 +1,86 @@
+# =============================================================================
+#  cookie-net-bench
+# =============================================================================
+#
+# Competitor benchmarks for cookie-net (its plan, section 10, rows C1 to C11).
+#
+# This repository exists so that cookie-net itself never depends on the
+# `cookie`, `biscotti`, or `cookie_store` crates. They are allowed here and
+# only here. cookie-net is taken from crates.io, never by path: each
+# repository is checked out on its own in CI.
+[package]
+name    = "cookie-net-bench"
+version = "0.1.0"
+publish = false
+
+# Minimum Supported Rust Version (MSRV)
+rust-version = "1.85"
+edition = "2024"
+
+# License
+license = "MIT OR Apache-2.0"
+
+# Readme
+readme = "README.md"
+
+# Description
+description = "Independent, reproducible benchmarks of cookie-net against cookie, biscotti, and cookie_store on identical input bytes."
+
+# Authors
+authors = ["James Gober <me@jamesgober.com>"]
+
+
+# DEPENDENCIES
+# #################################
+# The shared harness in src/ is used by both the benches and
+# tests/equivalence.rs, so the competitors are ordinary dependencies of this
+# unpublished crate.
+[dependencies]
+cookie-net   = { version = "0.6", features = ["signed", "encrypted", "jar"] }
+parse-net    = "0.6.1"
+# `secure` brings SignedJar and PrivateJar (HMAC-SHA-256, AES-256-GCM).
+cookie       = { version = "0.18", features = ["secure"] }
+biscotti     = "0.4"
+cookie_store = "0.22"
+url          = "2"
+
+# `clock_gettime(CLOCK_THREAD_CPUTIME_ID)` for the ratio tool, which holds
+# steady under load (src/bin/ratio.rs, Linux only).
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+
+
+# DEV DEPENDENCIES
+# #################################
+[dev-dependencies]
+criterion = { version = "0.5", default-features = false, features = ["cargo_bench_support"] }
+
+
+# BINARIES
+# #################################
+[[bin]]
+name = "ratio"
+path = "src/bin/ratio.rs"
+required-features = []
+
+# BENCHMARKS
+# #################################
+[[bench]]
+name    = "cookies"
+harness = false
+
+
+# PROFILES
+# #################################
+# The same code generation settings as cookie-net's release profile, so the
+# comparison reflects what an application gets.
+[profile.bench]
+opt-level     = 3
+lto           = "fat"
+codegen-units = 1
+debug         = false
+
+[profile.release]
+opt-level     = 3
+lto           = "fat"
+codegen-units = 1
